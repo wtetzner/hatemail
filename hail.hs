@@ -8,12 +8,6 @@ import System.IO
 port = "993"
 hostname = "imap.googlemail.com"
 
--- connectIMAPsocket :: String -> Int -> Bool -> IO Stream
--- connectIMAPsocket hostname port useSSL = undefined
-
--- createSSLClient hostname port = client TLSParams { pConnectVersion = SSL3
---                                                  , pAllowedVersions = [SSL3]}
-
 generator :: IO SystemRandom
 generator = newGenIO
 
