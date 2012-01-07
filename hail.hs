@@ -8,22 +8,10 @@ import System.IO
 port = "993"
 hostname = "imap.gmail.com"
 
-generator :: IO SystemRandom
-generator = newGenIO
-
 connectClient :: String -> String -> IO (TLSCtx Handle)
 connectClient hostname port = do
-  g <- generator
-  connectionClient hostname port
-                   TLSParams { pConnectVersion = SSL3
-                             , pAllowedVersions = [SSL3]
-                             , pCiphers = ciphersuite_all
-                             , pCompressions = []
-                             , pWantClientCert = False
-                             , pUseSecureRenegotiation = True
-                             , pUseSession = True
-                             }
-                   g
+  g <- newGenIO :: IO SystemRandom
+  connectionClient hostname port defaultParams { pCiphers = ciphersuite_all } g
 
 main = do
   imapclient <- connectClient hostname port
