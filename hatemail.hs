@@ -1,4 +1,6 @@
 {--
+Copyright (C) 2011,2012 Walter Tetzner
+
 This file is part of hatemail.
 
 hatemail is free software: you can redistribute it and/or modify
