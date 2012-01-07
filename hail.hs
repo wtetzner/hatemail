@@ -14,7 +14,13 @@ connectClient hostname port = do
   connectionClient hostname port defaultParams { pCiphers = ciphersuite_all } g
 
 main = do
+  putStr "Connecting..."
+  hFlush stdout
   imapclient <- connectClient hostname port
+  success <- handshake imapclient
+  putStrLn "done."
+  putStr "Receiving line..."
+  hFlush stdout
   line <- recvData imapclient
+  putStrLn "done."
   return line
-
