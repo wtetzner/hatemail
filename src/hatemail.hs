@@ -22,7 +22,7 @@ import Connection
 import Network.TLS
 import Network.TLS.Extra
 import Crypto.Random
---import System.IO
+import System.IO
 import qualified Data.ByteString.Lazy as BZ
 
 port = "993"

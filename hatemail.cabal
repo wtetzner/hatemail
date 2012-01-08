@@ -2,10 +2,10 @@ name: hatemail
 version: 0.1.0
 license: GPLv3
 license-file: "COPYING"
-build-depends: base -any, tls
+build-depends: base -any, tls, bytestring, crypto-api, tls-extra
 
 executable: hatemail
 main-is: hatemail.hs
 buildable: True
 hs-source-dirs: src
-other-modules: Parse Connection Commands
+other-modules: Parse Connection Command
