@@ -18,22 +18,15 @@ along with hatemail.  If not, see <http://www.gnu.org/licenses/>.
 --}
 
 module Main where
-import Network.Socket
+import Connection
 import Network.TLS
 import Network.TLS.Extra
 import Crypto.Random
-import System.IO
+--import System.IO
 import qualified Data.ByteString.Lazy as BZ
 
 port = "993"
 hostname = "imap.gmail.com"
-
-connectClient :: String -> String -> IO (TLSCtx Handle)
-connectClient hostname port = do
-  g <- newGenIO :: IO SystemRandom
-  client <- connectionClient hostname port defaultParams { pCiphers = ciphersuite_all } g
-  success <- handshake client
-  return client
 
 main = do
   putStr "Connecting..."
