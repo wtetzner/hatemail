@@ -8,4 +8,4 @@ executable: hatemail
 main-is: hatemail.hs
 buildable: True
 hs-source-dirs: src
-other-modules: Expression Eval Functions
+other-modules: Parse Connection Commands
