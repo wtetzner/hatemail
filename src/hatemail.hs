@@ -35,20 +35,21 @@ parseArgs :: [String] -> IMAPConnect
 parseArgs (hostname:port:username:password:args) = 
     IMAPConnect hostname port username password
 
-doimap (IMAPConnect hostname port username password) = do
+doimap :: IMAPConnect -> IO ()
+doimap imapconn = do
   putStr "Connecting..."
   hFlush stdout
-  imapclient <- imapConnect hostname port username password
+  imapclient <- imapConnect imapconn
   putStrLn "done."
   putStr "Receiving line..."
   hFlush stdout
   line <- recvData imapclient
   putStrLn "done."
   BZ.putStrLn line
-  putStr "Sending login..."
-  hFlush stdout
-  imapLogin imapclient username password
-  putStrLn "sent."
+  -- putStr "Sending login..."
+  -- hFlush stdout
+  -- imapLogin imapclient username password
+  -- putStrLn "sent."
   hFlush stdout
   line2 <- recvData imapclient
   BZ.putStrLn line2

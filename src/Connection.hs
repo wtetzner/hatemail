@@ -41,7 +41,7 @@ imapLogin :: MonadIO m => TLSCtx c -> String -> String -> m ()
 imapLogin ctx username password = do
     sendData ctx $ BZ.pack $ map BS.c2w $ "a01 login " ++ username ++ " " ++ password ++ "\r\n"
 
-imapConnect hostname port username password = do
+imapConnect (IMAPConnect hostname port username password) = do
     imapclient <- connectClient hostname port
     imapLogin imapclient username password
     return imapclient
