@@ -1,9 +1,9 @@
 name: hatemail
 version: 0.1.0
-license: GPLv3
+license: GPL-3
 license-file: "COPYING"
-build-depends: base -any, tls, bytestring, crypto-api, tls-extra, haskell98
-
+build-depends: base -any, tls, bytestring, crypto-api, tls-extra, haskell98, mtl
+build-type: Simple
 executable: hatemail
 main-is: hatemail.hs
 buildable: True

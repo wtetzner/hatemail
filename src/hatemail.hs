@@ -27,25 +27,26 @@ import qualified Data.ByteString.Lazy as BZ
 import qualified Data.ByteString.Internal as BS
 import System(getArgs)
 
-port = "993"
-hostname = "imap.gmail.com"
-
 main = do
-  username:password:args <- getArgs
-  doimap username password
---  doimap 
+  args <- getArgs
+  doimap $ parseArgs args
 
-doimap username password = do
+parseArgs :: [String] -> IMAPConnect
+parseArgs (hostname:port:username:password:args) = 
+    IMAPConnect hostname port username password
+
+doimap (IMAPConnect hostname port username password) = do
   putStr "Connecting..."
   hFlush stdout
-  imapclient <- connectClient hostname port
+  imapclient <- imapConnect hostname port username password
   putStrLn "done."
   putStr "Receiving line..."
   hFlush stdout
   line <- recvData imapclient
   putStrLn "done."
   BZ.putStrLn line
-  putStrLn "Sending login..."
+  putStr "Sending login..."
+  hFlush stdout
   imapLogin imapclient username password
   putStrLn "sent."
   hFlush stdout

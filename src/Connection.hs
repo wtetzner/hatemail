@@ -24,6 +24,12 @@ import qualified Data.ByteString.Lazy as BZ
 import qualified Data.ByteString.Internal as BS
 import Control.Monad.State
 
+type Hostname = String
+type Port = String
+type Username = String
+type Password = String
+data IMAPConnect = IMAPConnect Hostname Port Username Password
+
 connectClient :: String -> String -> IO (TLSCtx Handle)
 connectClient hostname port = do
   g <- newGenIO :: IO SystemRandom
@@ -35,4 +41,7 @@ imapLogin :: MonadIO m => TLSCtx c -> String -> String -> m ()
 imapLogin ctx username password = do
     sendData ctx $ BZ.pack $ map BS.c2w $ "a01 login " ++ username ++ " " ++ password ++ "\r\n"
 
---imapConnect hostname port username password = 
+imapConnect hostname port username password = do
+    imapclient <- connectClient hostname port
+    imapLogin imapclient username password
+    return imapclient
