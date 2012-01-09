@@ -21,6 +21,8 @@ import Network.TLS.Extra
 import Crypto.Random
 import System.IO
 import qualified Data.ByteString.Lazy as BZ
+import qualified Data.ByteString.Internal as BS
+import Control.Monad.State
 
 connectClient :: String -> String -> IO (TLSCtx Handle)
 connectClient hostname port = do
@@ -28,5 +30,9 @@ connectClient hostname port = do
   client <- connectionClient hostname port defaultParams { pCiphers = ciphersuite_all } g
   success <- handshake client
   return client
+
+imapLogin :: MonadIO m => TLSCtx c -> String -> String -> m ()
+imapLogin ctx username password = do
+    sendData ctx $ BZ.pack $ map BS.c2w $ "a01 login " ++ username ++ " " ++ password ++ "\r\n"
 
 --imapConnect hostname port username password = 

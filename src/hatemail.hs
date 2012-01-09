@@ -24,11 +24,18 @@ import Network.TLS.Extra
 import Crypto.Random
 import System.IO
 import qualified Data.ByteString.Lazy as BZ
+import qualified Data.ByteString.Internal as BS
+import System(getArgs)
 
 port = "993"
 hostname = "imap.gmail.com"
 
 main = do
+  username:password:args <- getArgs
+  doimap username password
+--  doimap 
+
+doimap username password = do
   putStr "Connecting..."
   hFlush stdout
   imapclient <- connectClient hostname port
@@ -38,3 +45,9 @@ main = do
   line <- recvData imapclient
   putStrLn "done."
   BZ.putStrLn line
+  putStrLn "Sending login..."
+  imapLogin imapclient username password
+  putStrLn "sent."
+  hFlush stdout
+  line2 <- recvData imapclient
+  BZ.putStrLn line2
