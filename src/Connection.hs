@@ -16,6 +16,7 @@ You should have received a copy of the GNU General Public License
 along with hatemail.  If not, see <http://www.gnu.org/licenses/>.  --}
 
 module Connection where
+import Network
 import Network.TLS
 import Network.TLS.Extra
 import Crypto.Random
@@ -23,25 +24,64 @@ import System.IO
 import qualified Data.ByteString.Lazy as BZ
 import qualified Data.ByteString.Internal as BS
 import Control.Monad.State
+import Text.Printf
 
 type Hostname = String
 type Port = String
 type Username = String
 type Password = String
-data IMAPConnect = IMAPConnect Hostname Port Username Password
+type SSLConnection = (TLSCtx Handle)
+data ConnectionInfo = Auth Bool Hostname Port Username Password
+                    | NoAuth Bool Hostname Port
 
-connectClient :: String -> String -> IO (TLSCtx Handle)
-connectClient hostname port = do
+data IMAPConnection = SSLConn (TLSCtx Handle)
+                    | Conn Handle
+
+connectClient :: Bool -> String -> String -> IO IMAPConnection
+connectClient True hostname port = do
   g <- newGenIO :: IO SystemRandom
   client <- connectionClient hostname port defaultParams { pCiphers = ciphersuite_all } g
   success <- handshake client
-  return client
+  return $ SSLConn client
+connectClient False hostname port = do
+  h <- connectTo hostname $ PortNumber $ fromIntegral $ (read port::Int)
+  return $ Conn h
 
-imapLogin :: MonadIO m => TLSCtx c -> String -> String -> m ()
-imapLogin ctx username password = do
-    sendData ctx $ BZ.pack $ map BS.c2w $ "a01 login " ++ username ++ " " ++ password ++ "\r\n"
+disconnectClient :: IMAPConnection -> IO ()
+disconnectClient (SSLConn client) = do
+  bye client
+  let handle = ctxConnection client
+  hClose handle
+disconnectClient (Conn client) = do
+  hClose client
 
-imapConnect (IMAPConnect hostname port username password) = do
-    imapclient <- connectClient hostname port
+readText :: IMAPConnection -> IO BZ.ByteString
+readText (SSLConn ctx) = do
+  recvData ctx
+readText (Conn h) = do
+  BZ.hGet h 4096
+
+readTextNoBlock :: IMAPConnection -> IO BZ.ByteString
+readTextNoBlock (SSLConn ctx) = do
+  let conn = ctxConnection ctx
+  ready <- hReady conn
+  if ready then recvData ctx else return BZ.empty
+readTextNoBlock (Conn h) = do
+  BZ.hGetNonBlocking h 4096
+
+writeText :: IMAPConnection -> BZ.ByteString -> IO ()
+writeText (SSLConn ctx) text = sendData ctx text
+writeText (Conn h) text = BZ.hPut h text
+
+imapLogin :: IMAPConnection -> String -> String -> IO ()
+imapLogin (SSLConn ctx) username password = do
+  sendData ctx $ BZ.pack $ map BS.c2w $ printf "a01 login %s %s\r\n" username password
+imapLogin (Conn h) username password = do
+  BZ.hPut h $ BZ.pack $ map BS.c2w $ printf "a01 login %s %s\r\n" username password
+
+imapConnect :: ConnectionInfo -> IO IMAPConnection
+imapConnect (Auth isSSL hostname port username password) = do
+    imapclient <- connectClient isSSL hostname port
     imapLogin imapclient username password
     return imapclient
+imapConnect (NoAuth isSSL hostname port) = connectClient isSSL hostname port

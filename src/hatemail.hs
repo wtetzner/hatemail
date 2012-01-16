@@ -31,11 +31,11 @@ main = do
   args <- getArgs
   doimap $ parseArgs args
 
-parseArgs :: [String] -> IMAPConnect
+parseArgs :: [String] -> ConnectionInfo
 parseArgs (hostname:port:username:password:args) = 
-    IMAPConnect hostname port username password
+    Auth True hostname port username password
 
-doimap :: IMAPConnect -> IO ()
+doimap :: ConnectionInfo -> IO ()
 doimap imapconn = do
   putStr "Connecting..."
   hFlush stdout
@@ -43,13 +43,11 @@ doimap imapconn = do
   putStrLn "done."
   putStr "Receiving line..."
   hFlush stdout
-  line <- recvData imapclient
+  line <- readText imapclient
   putStrLn "done."
   BZ.putStrLn line
-  -- putStr "Sending login..."
-  -- hFlush stdout
-  -- imapLogin imapclient username password
-  -- putStrLn "sent."
   hFlush stdout
-  line2 <- recvData imapclient
+  line2 <- readText imapclient
   BZ.putStrLn line2
+  hFlush stdout
+  disconnectClient imapclient
