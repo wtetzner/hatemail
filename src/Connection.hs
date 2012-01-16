@@ -47,14 +47,6 @@ connectClient False hostname port = do
   h <- connectTo hostname $ PortNumber $ fromIntegral $ (read port::Int)
   return $ Conn h
 
-disconnectClient :: IMAPConnection -> IO ()
-disconnectClient (SSLConn client) = do
-  bye client
-  let handle = ctxConnection client
-  hClose handle
-disconnectClient (Conn client) = do
-  hClose client
-
 readText :: IMAPConnection -> IO BZ.ByteString
 readText (SSLConn ctx) = do
   recvData ctx
@@ -75,7 +67,15 @@ writeText (Conn h) text = BZ.hPut h text
 
 imapLogin :: IMAPConnection -> String -> String -> IO ()
 imapLogin conn username password = do
-  writeText conn $ BZ.pack $ map BS.c2w $ printf "a01 login %s %s\r\n" username password
+  writeText conn $ BZ.pack $ map BS.c2w $ printf "a001 login %s %s\r\n" username password
+
+disconnectClient :: IMAPConnection -> IO ()
+disconnectClient (SSLConn client) = do
+  bye client
+  let handle = ctxConnection client
+  hClose handle
+disconnectClient (Conn client) = do
+  hClose client
 
 imapConnect :: ConnectionInfo -> IO IMAPConnection
 imapConnect (Auth isSSL hostname port username password) = do

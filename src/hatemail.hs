@@ -35,6 +35,13 @@ parseArgs :: [String] -> ConnectionInfo
 parseArgs (hostname:port:username:password:args) = 
     Auth True hostname port username password
 
+runCommand conn command = do
+  putStrLn command
+  writeText conn $ BZ.pack $ map BS.c2w $ command ++ "\r\n"
+  line <- readText conn
+  BZ.putStrLn line
+  hFlush stdout
+
 doimap :: ConnectionInfo -> IO ()
 doimap imapconn = do
   putStr "Connecting..."
@@ -50,4 +57,6 @@ doimap imapconn = do
   line2 <- readText imapclient
   BZ.putStrLn line2
   hFlush stdout
+  runCommand imapclient "a002 select INBOX"
+  runCommand imapclient "a003 list (* INBOX)"
   disconnectClient imapclient
