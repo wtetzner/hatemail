@@ -74,10 +74,8 @@ writeText (SSLConn ctx) text = sendData ctx text
 writeText (Conn h) text = BZ.hPut h text
 
 imapLogin :: IMAPConnection -> String -> String -> IO ()
-imapLogin (SSLConn ctx) username password = do
-  sendData ctx $ BZ.pack $ map BS.c2w $ printf "a01 login %s %s\r\n" username password
-imapLogin (Conn h) username password = do
-  BZ.hPut h $ BZ.pack $ map BS.c2w $ printf "a01 login %s %s\r\n" username password
+imapLogin conn username password = do
+  writeText conn $ BZ.pack $ map BS.c2w $ printf "a01 login %s %s\r\n" username password
 
 imapConnect :: ConnectionInfo -> IO IMAPConnection
 imapConnect (Auth isSSL hostname port username password) = do
