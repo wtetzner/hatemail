@@ -25,7 +25,7 @@ import Crypto.Random
 import System.IO
 import qualified Data.ByteString.Lazy as BZ
 import qualified Data.ByteString.Internal as BS
-import System(getArgs)
+import System.Environment(getArgs)
 
 main = do
   args <- getArgs
