@@ -40,6 +40,7 @@ runCommand conn command = do
   putStrLn command
   writeText conn $ BZ.pack $ map BS.c2w $ command ++ "\r\n"
   line <- readText conn
+  -- line2 <- readText conn
   BZ.putStrLn line
   hFlush stdout
 
@@ -59,5 +60,10 @@ doimap imapconn = do
   BZ.putStrLn line2
   hFlush stdout
   runCommand imapclient "a002 select INBOX"
-  runCommand imapclient "a003 list (* INBOX)"
+  runCommand imapclient "a003 LIST \"\" *"
+  runCommand imapclient "a004 NOOP"
+  -- runCommand imapclient "a005 STORE 1:1 +FLAGS (\\Deleted)"
+  -- runCommand imapclient "a006 EXPUNGE"
+  runCommand imapclient "a007 SEARCH TEXT \"Privacy\""
+  runCommand imapclient "a008 FETCH 5 (BODY[HEADER] BODY[TEXT])"
   disconnectClient imapclient
