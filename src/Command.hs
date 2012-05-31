@@ -19,9 +19,12 @@ along with hatemail.  If not, see <http://www.gnu.org/licenses/>.
 
 module Command where
 
-data Tagged = Msg String String
-            | Cont String String
-              deriving Show
-data Message = Tag Tagged
-             | Untag String
+data Cmd = IAtom String
+         | IString String
+         | INumber Int
+         | NIL
+           deriving (Eq, Ord, Show)
 
+data IMAPCmd = Tagged String Cmd
+             | Untagged Cmd
+               deriving (Eq, Ord, Show)
