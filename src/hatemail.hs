@@ -19,6 +19,7 @@ along with hatemail.  If not, see <http://www.gnu.org/licenses/>.
 
 module Main where
 import Connection
+import Parse
 import Network.TLS
 import Network.TLS.Extra
 import Crypto.Random
