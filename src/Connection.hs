@@ -21,7 +21,7 @@ import Network.TLS
 import Network.TLS.Extra
 import Crypto.Random
 import System.IO
-import qualified Data.ByteString.Lazy as BZ
+import qualified Data.ByteString.Lazy.Char8 as BZ
 import qualified Data.ByteString.Internal as BS
 import Control.Monad.State
 import Text.Printf
@@ -61,13 +61,24 @@ readTextNoBlock (SSLConn ctx) = do
 readTextNoBlock (Conn h) = do
   BZ.hGetNonBlocking h 4096
 
+keepReadingText :: IMAPConnection -> IO BZ.ByteString
+keepReadingText conn = do
+  text <- readText conn
+  moreText <- readLazy
+  return $ BZ.append text moreText
+      where readLazy = do
+              text <- readTextNoBlock conn
+              if BZ.null text then return text else do
+                                                 moreText <- readLazy
+                                                 return $ BZ.append text moreText
+
 writeText :: IMAPConnection -> BZ.ByteString -> IO ()
 writeText (SSLConn ctx) text = sendData ctx text
 writeText (Conn h) text = BZ.hPut h text
 
 imapLogin :: IMAPConnection -> String -> String -> IO ()
 imapLogin conn username password = do
-  writeText conn $ BZ.pack $ map BS.c2w $ printf "a001 login %s %s\r\n" username password
+  writeText conn $ BZ.pack $ printf "a001 login %s %s\r\n" username password
 
 disconnectClient :: IMAPConnection -> IO ()
 disconnectClient (SSLConn client) = do

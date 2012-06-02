@@ -19,12 +19,33 @@ along with hatemail.  If not, see <http://www.gnu.org/licenses/>.
 
 module Command where
 
-data Cmd = IAtom String
-         | IString String
-         | INumber Int
-         | NIL
-           deriving (Eq, Ord, Show)
+data RespTextCode = Alert
+                  | BadCharset [String]
+                  | Parse
+                  | Capability [String]
+                  | PermanentFlags [String]
+                  | ReadOnly
+                  | ReadWrite
+                  | TryCreate
+                  | UIDNext Int
+                  | UIDValidity Int
+                  | Unseen Int
+                  | GenRespCode String (Maybe String)
+                    deriving (Eq, Ord, Show)
 
-data IMAPCmd = Tagged String Cmd
-             | Untagged Cmd
-               deriving (Eq, Ord, Show)
+data State = Ok | No | Bad | Bye | PreAuth
+             deriving (Eq, Ord, Show)
+
+type Tag = String
+
+data ContinueResponse = Base64 String
+                      | ResponseText (Maybe RespTextCode) String
+                        deriving (Eq, Ord, Show)
+
+data Response = ResponseCond State (Maybe RespTextCode) String
+                deriving (Eq, Ord, Show)
+
+data IMAPResponse = Tagged Tag Response
+                  | Untagged Response
+                  | Continue ContinueResponse
+                    deriving (Eq, Ord, Show)

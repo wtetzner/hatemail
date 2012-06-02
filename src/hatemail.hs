@@ -27,6 +27,7 @@ import System.IO
 import qualified Data.ByteString.Lazy as BZ
 import qualified Data.ByteString.Internal as BS
 import System.Environment(getArgs)
+import Control.Concurrent
 
 main = do
   args <- getArgs
@@ -39,8 +40,10 @@ parseArgs (hostname:port:username:password:args) =
 runCommand conn command = do
   putStrLn command
   writeText conn $ BZ.pack $ map BS.c2w $ command ++ "\r\n"
-  line <- readText conn
-  -- line2 <- readText conn
+  line <- keepReadingText conn
+  -- line <- readText conn
+  -- line2 <- readTextNoBlock conn
+  -- line3 <- readTextNoBlock conn
   BZ.putStrLn line
   hFlush stdout
 
