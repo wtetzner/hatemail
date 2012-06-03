@@ -200,12 +200,12 @@ responseState = do state <- choice [ok, no, bad]
 respCondState = do state <- responseState
                    sp
                    (code, text) <- respText
-                   return $ ResponseCond state code text
+                   return $ Response state code text
 
 respCondBye = do state <- respState
                  sp
                  (code, text) <- respText
-                 return $ ResponseCond state code text
+                 return $ Response state code text
     where respState = do state <- str "BYE"
                          return Bye
 
@@ -348,10 +348,15 @@ mailboxData = choice [ flags
                     str "RECENT"
                     return $ Recent num
 
--- responseData = do C8.char '*'
---                   sp
---                   resp <- choice [ respCondState, respCondBye
---                                 , ]
+responseData = do C8.char '*'
+                  sp
+                  resp <- choice [ respCondState
+                                , respCondBye
+                                , mboxData]
+                  crlf
+                  return $ Untagged resp
+    where mboxData = do mdata <- mailboxData
+                        return $ MailboxData mdata
 
 responseTagged = do t <- tag
                     sp

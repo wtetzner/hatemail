@@ -44,14 +44,14 @@ type StatusAtt = String
 data MailboxList = MailboxList [Flag] (Maybe String) Mailbox
                    deriving (Eq, Ord, Show)
 
-data MailboxData = Flags [Flag]
-                 | List MailboxList
-                 | LSub MailboxList
-                 | Search [Int]
-                 | Status Mailbox [(StatusAtt, Int)]
-                 | Exists Int
-                 | Recent Int
-                   deriving (Eq, Ord, Show)
+data MBoxData = Flags [Flag]
+              | List MailboxList
+              | LSub MailboxList
+              | Search [Int]
+              | Status Mailbox [(StatusAtt, Int)]
+              | Exists Int
+              | Recent Int
+                deriving (Eq, Ord, Show)
 
 type Tag = String
 
@@ -59,7 +59,8 @@ data ContinueResponse = Base64 String
                       | ResponseText (Maybe RespTextCode) String
                         deriving (Eq, Ord, Show)
 
-data Response = ResponseCond State (Maybe RespTextCode) String
+data Response = Response State (Maybe RespTextCode) String
+              | MailboxData MBoxData
                 deriving (Eq, Ord, Show)
 
 data IMAPResponse = Tagged Tag Response
