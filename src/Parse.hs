@@ -28,7 +28,7 @@ import Data.Char (ord, chr)
 import Data.Attoparsec.Combinator
 
 str s = do text <- C8.stringCI s
-           return $ BS.unpack text
+           return $ BS.unpack s
 
 isSP c = c == ' '
 sp = C8.satisfy isSP
@@ -55,16 +55,17 @@ isAtomChar c = (not $ isAtomSpecial c) && ((ord c) >= 0x01) && ((ord c) <= 0x7F)
 isAStringChar c = (isAtomChar c) || (isRespSpecial c)
 astringChar = C8.satisfy isAStringChar
 
-astring = choice [astr, atm]
+astring = choice [astr, string]
     where astr = do text <- many1 astringChar
                     return text
-          atm = do a <- atom
-                   return a
 
 atom = do text <- C8.takeWhile1 isAtomChar
           return $ BS.unpack text
 
-isTextChar c = c /= '\r' && c /= '\n'
+isChar c = ((ord c) >= 0x01) && ((ord c) <= 0x7F)
+char = C8.satisfy isChar
+
+isTextChar c = c /= '\r' && c /= '\n' && (isChar c)
 textChar = C8.satisfy isTextChar
 
 text = many1 textChar
@@ -109,8 +110,6 @@ flag = do text <- choice [ str "\\Answered"
                         , flagKeyword
                         , flagExtension]
           return text
-    where str s = do text <- C8.stringCI s
-                     return $ BS.unpack s
 flagFetch = choice [flag, recent]
   where recent = do text <- C8.string "\\Recent"
                     return "\\Recent"
@@ -178,8 +177,6 @@ respTextCode = do choice [ alert, badcharset, capabilityData
                       strs <- sepBy1 astring sp
                       C8.char ')'
                       return $ BadCharset strs
-          str s = do text <- C8.stringCI s
-                     return $ BS.unpack text
 
 respText = do code <- option Nothing textCode
               txt <- ptext
@@ -205,12 +202,6 @@ respCondState = do state <- responseState
                    (code, text) <- respText
                    return $ ResponseCond state code text
 
-responseTagged = do t <- tag
-                    sp
-                    cond <- respCondState
-                    crlf
-                    return $ Tagged t cond
-
 respCondBye = do state <- respState
                  sp
                  (code, text) <- respText
@@ -223,15 +214,6 @@ responseFatal = do C8.char '*'
                    cond <- respCondBye
                    crlf
                    return $ Untagged cond
-
-responseDone = choice [responseTagged, responseFatal]
-
-continueRequest = do C8.char '+'
-                     sp
-                     resp <- choice [rtext, base64]
-                     return resp
-    where rtext = do (code, text) <- respText
-                     return $ ResponseText code text
 
 crlf = do C8.string "\r\n"
 literal = do C8.string "{"
@@ -279,5 +261,115 @@ isTagChar c = (isAStringChar c) && (c /= '+')
 
 tag = many1 $ C8.satisfy isTagChar
 
-serverResponse = do cmd <- choice [responseTagged]
+flagList = do C8.char '('
+              flags <- sepBy1 flag sp
+              C8.char ')'
+              return flags
+
+flags = do str "FLAGS"
+           sp
+           flgs <- flagList
+           return $ Flags flgs
+
+mailbox = choice [inbox, astring]
+    where inbox = str "INBOX"
+
+mbxListOflag = choice [str "\\Noinferiors", flagExtension]
+mbxListSflag = choice [ str "\\Noselect"
+                      , str "\\Marked"
+                      , str "\\Unmarked"]
+mbxListFlags = sepBy1 mflag sp
+    where mflag = choice [mbxListSflag, mbxListOflag]
+
+mailboxList = do C8.char '('
+                 mflags <- option [] mbxListFlags
+                 C8.char ')'
+                 sp
+                 qchr <- choice [chr, nil]
+                 sp
+                 mbx <- mailbox
+                 return $ MailboxList mflags qchr mbx
+    where chr = do dquote
+                   c <- quotedChar
+                   dquote
+                   return $ Just [c]
+
+statusAtt = choice [ str "MESSAGES"
+                   , str "RECENT"
+                   , str "UIDNEXT"
+                   , str "UIDVALIDITY"
+                   , str "UNSEEN"]
+
+statusAttList = sepBy1 sattPair sp
+    where sattPair = do stat <- statusAtt
+                        sp
+                        num <- number
+                        return (stat, num)
+
+mailboxData = choice [ flags
+                     , list
+                     , lsub
+                     , search
+                     , status
+                     , exists
+                     , recent]
+  where flags = do str "FLAGS"
+                   sp
+                   flgs <- flagList
+                   return $ Flags flgs
+        list = do str "LIST"
+                  sp
+                  mblist <- mailboxList
+                  return $ List mblist
+        lsub = do str "LSUB"
+                  sp
+                  mblist <- mailboxList
+                  return $ LSub mblist
+        search = do str "SEARCH"
+                    ns <- option [] nums
+                    return $ Search ns
+        nums = do sp
+                  ns <- (sepBy1 nzNumber sp)
+                  return ns
+        status = do str "STATUS"
+                    sp
+                    mbx <- mailbox
+                    sp
+                    C8.char '('
+                    lst <- option [] statusAttList
+                    C8.char ')'
+                    return $ Status mbx lst
+        exists = do num <- number
+                    sp
+                    str "EXISTS"
+                    return $ Exists num
+        recent = do num <- number
+                    sp
+                    str "RECENT"
+                    return $ Recent num
+
+-- responseData = do C8.char '*'
+--                   sp
+--                   resp <- choice [ respCondState, respCondBye
+--                                 , ]
+
+responseTagged = do t <- tag
+                    sp
+                    cond <- respCondState
+                    crlf
+                    return $ Tagged t cond
+
+responseDone = choice [responseTagged, responseFatal]
+
+continueRequest = do C8.char '+'
+                     sp
+                     resp <- choice [rtext, base64]
+                     crlf
+                     return $ Continue resp
+    where rtext = do (code, text) <- respText
+                     return $ ResponseText code text
+
+serverResponse = do cmd <- choice [ responseTagged
+                                 , responseDone
+                                 , continueRequest]
                     return cmd

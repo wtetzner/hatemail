@@ -19,11 +19,13 @@ along with hatemail.  If not, see <http://www.gnu.org/licenses/>.
 
 module Command where
 
+type Flag = String
+
 data RespTextCode = Alert
                   | BadCharset [String]
                   | Parse
                   | Capability [String]
-                  | PermanentFlags [String]
+                  | PermanentFlags [Flag]
                   | ReadOnly
                   | ReadWrite
                   | TryCreate
@@ -35,6 +37,21 @@ data RespTextCode = Alert
 
 data State = Ok | No | Bad | Bye | PreAuth
              deriving (Eq, Ord, Show)
+
+type Mailbox = String
+type StatusAtt = String
+
+data MailboxList = MailboxList [Flag] (Maybe String) Mailbox
+                   deriving (Eq, Ord, Show)
+
+data MailboxData = Flags [Flag]
+                 | List MailboxList
+                 | LSub MailboxList
+                 | Search [Int]
+                 | Status Mailbox [(StatusAtt, Int)]
+                 | Exists Int
+                 | Recent Int
+                   deriving (Eq, Ord, Show)
 
 type Tag = String
 
