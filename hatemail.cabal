@@ -9,4 +9,4 @@ extensions: OverloadedStrings
 main-is: hatemail.hs
 buildable: True
 hs-source-dirs: src
-other-modules: Parse Connection Command
+other-modules: Parse Connection Response

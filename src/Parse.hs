@@ -18,7 +18,7 @@ along with hatemail.  If not, see <http://www.gnu.org/licenses/>.  --}
 {-# LANGUAGE OverloadedStrings #-}
 
 module Parse where
-import Command
+import Response
 import Control.Applicative (many)
 import qualified Data.Attoparsec.ByteString.Lazy as AZ
 import qualified Data.Attoparsec.ByteString.Char8 as C8

@@ -17,7 +17,7 @@ You should have received a copy of the GNU General Public License
 along with hatemail.  If not, see <http://www.gnu.org/licenses/>.
 --}
 
-module Command where
+module Response where
 
 type Flag = String
 type NString = Maybe String
