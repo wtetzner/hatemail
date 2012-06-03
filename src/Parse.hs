@@ -348,6 +348,86 @@ mailboxData = choice [ flags
                     str "RECENT"
                     return $ Recent num
 
+msgAttDynamic = do str "FLAGS"
+                   sp
+                   C8.char '('
+                   flgs <- sepBy flagFetch sp
+                   C8.char ')'
+                   return $ AttFlags flgs
+
+addrName = nstring
+addrAdl = nstring
+addrHost = nstring
+addrMailbox = nstring
+address = do C8.char '('
+             name <- addrName
+             sp
+             adl <- addrAdl
+             sp
+             host <- addrHost
+             sp
+             mailbox <- addrMailbox
+             C8.char ')'
+             return $ Address name adl mailbox host
+
+addrs = do C8.char '('
+           ads <- many1 address
+           C8.char ')'
+           return $ Just ads
+naddrs = choice [addrs, nil]
+
+envelop = do C8.char '('
+             date <- nstring
+             sp
+             subject <- nstring
+             sp
+             from <- naddrs
+             sp
+             sender <- naddrs
+             sp
+             replyTo <- naddrs
+             sp
+             to <- naddrs
+             sp
+             cc <- naddrs
+             sp
+             bcc <- naddrs
+             sp
+             inReplyTo <- naddrs
+             sp
+             messageID <- nstring
+             C8.char ')'
+             return $ Envelope { envDate = date
+                               , envSubject = subject
+                               , envFrom = from
+                               , envSender = sender
+                               , envReplyTo = replyTo
+                               , envTo = to
+                               , envCC = cc
+                               , envBCC = bcc
+                               , envInReplyTo = inReplyTo
+                               , envMessageID = messageID}
+
+bodyExtension = choice [extStr, extNum, extList]
+    where extList = do C8.char '('
+                       exts <- sepBy1 bodyExtension sp
+                       C8.char ')'
+                       return $ BodyExt exts
+          extStr = do s <- nstring
+                      return $ BodyExtStr s
+          extNum = do num <- number
+                      return $ BodyExtNum num
+
+mediaBasic = 
+
+-- msgAttStatic = 
+--     where env = do str "ENVELOPE"
+--                    sp
+--                    envl <- envelope
+--                    return $ AttEnvelope envl
+
+-- messageData = do 
+
 responseData = do C8.char '*'
                   sp
                   resp <- choice [ respCondState
