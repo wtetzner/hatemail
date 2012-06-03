@@ -412,13 +412,13 @@ bodyExtension = choice [extStr, extNum, extList]
     where extList = do C8.char '('
                        exts <- sepBy1 bodyExtension sp
                        C8.char ')'
-                       return $ BodyExt exts
+                       return $ BodyExtension exts
           extStr = do s <- nstring
                       return $ BodyExtStr s
           extNum = do num <- number
                       return $ BodyExtNum num
 
-mediaBasic = 
+--mediaBasic = 
 
 -- msgAttStatic = 
 --     where env = do str "ENVELOPE"

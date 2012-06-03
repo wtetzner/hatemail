@@ -66,13 +66,13 @@ data Address = Address AddrName AddrAdl AddrMailbox AddrHost
 
 data Envelope = Envelope { envDate :: NString
                          , envSubject :: NString
-                         , envFrom :: NList [Address]
-                         , envSender :: NList [Address]
-                         , envReplyTo :: NList [Address]
-                         , envTo :: NList [Address]
-                         , envCC :: NList [Address]
-                         , envBCC :: NList [Address]
-                         , envInReplyTo :: NList [Address]
+                         , envFrom :: NList Address
+                         , envSender :: NList Address
+                         , envReplyTo :: NList Address
+                         , envTo :: NList Address
+                         , envCC :: NList Address
+                         , envBCC :: NList Address
+                         , envInReplyTo :: NList Address
                          , envMessageID :: NString}
                 deriving (Eq, Ord, Show)
 
