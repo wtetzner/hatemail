@@ -47,10 +47,11 @@ quotedSpecial = C8.satisfy isQuotedSpecial
 isRespSpecial c = c == ']'
 
 isAtomSpecial c = c == '(' || c == ')' || c == '{' || (isSP c)
-                  || (isCTL c) || (isListWildcard c) || (isQuotedSpecial c)
-                  || (isRespSpecial c)
+                  || (isCTL c) || (isListWildcard c)
+                  || (isQuotedSpecial c) || (isRespSpecial c)
 
-isAtomChar c = (not $ isAtomSpecial c) && ((ord c) >= 0x01) && ((ord c) <= 0x7F)
+isAtomChar c = (not $ isAtomSpecial c) && ((ord c) >= 0x01)
+               && ((ord c) <= 0x7F)
 
 isAStringChar c = (isAtomChar c) || (isRespSpecial c)
 astringChar = C8.satisfy isAStringChar
@@ -102,13 +103,13 @@ flagExtension = do bslash <- C8.char '\\'
                    return $  bslash : a
 flagKeyword = do a <- atom
                  return a
-flag = do text <- choice [ str "\\Answered"
-                        , str "\\Flagged"
-                        , str "\\Deleted"
-                        , str "\\Seen"
-                        , str "\\Draft"
-                        , flagKeyword
-                        , flagExtension]
+flag = do text <- choice [str "\\Answered",
+                         str "\\Flagged",
+                         str "\\Deleted",
+                         str "\\Seen",
+                         str "\\Draft",
+                         flagKeyword,
+                         flagExtension]
           return text
 flagFetch = choice [flag, recent]
   where recent = do text <- C8.string "\\Recent"
@@ -130,10 +131,10 @@ capability = choice [auth, at]
 capabilityData = do C8.stringCI "CAPABILITY"
                     caps <- sepBy1 capability sp
                     return $ Capability caps
-respTextCode = do choice [ alert, badcharset, capabilityData
-                         , parse, permFlags, readOnly, readWrite
-                         , tryCreate, uidnext, uidValidity
-                         , unseen]
+respTextCode = do choice [alert, badcharset, capabilityData,
+                          parse, permFlags, readOnly, readWrite,
+                          tryCreate, uidnext, uidValidity,
+                          unseen]
     where alert = do str "ALERT"
                      return Alert
           parse = do str "PARSE"
@@ -275,9 +276,9 @@ mailbox = choice [inbox, astring]
     where inbox = str "INBOX"
 
 mbxListOflag = choice [str "\\Noinferiors", flagExtension]
-mbxListSflag = choice [ str "\\Noselect"
-                      , str "\\Marked"
-                      , str "\\Unmarked"]
+mbxListSflag = choice [str "\\Noselect",
+                       str "\\Marked",
+                       str "\\Unmarked"]
 mbxListFlags = sepBy1 mflag sp
     where mflag = choice [mbxListSflag, mbxListOflag]
 
@@ -294,11 +295,11 @@ mailboxList = do C8.char '('
                    dquote
                    return $ Just [c]
 
-statusAtt = choice [ str "MESSAGES"
-                   , str "RECENT"
-                   , str "UIDNEXT"
-                   , str "UIDVALIDITY"
-                   , str "UNSEEN"]
+statusAtt = choice [str "MESSAGES",
+                    str "RECENT",
+                    str "UIDNEXT",
+                    str "UIDVALIDITY",
+                    str "UNSEEN"]
 
 statusAttList = sepBy1 sattPair sp
     where sattPair = do stat <- statusAtt
@@ -306,13 +307,8 @@ statusAttList = sepBy1 sattPair sp
                         num <- number
                         return (stat, num)
 
-mailboxData = choice [ flags
-                     , list
-                     , lsub
-                     , search
-                     , status
-                     , exists
-                     , recent]
+mailboxData = choice [flags, list, lsub, search, status,
+                      exists, recent]
   where flags = do str "FLAGS"
                    sp
                    flgs <- flagList
@@ -397,16 +393,16 @@ envelop = do C8.char '('
              sp
              messageID <- nstring
              C8.char ')'
-             return $ Envelope { envDate = date
-                               , envSubject = subject
-                               , envFrom = from
-                               , envSender = sender
-                               , envReplyTo = replyTo
-                               , envTo = to
-                               , envCC = cc
-                               , envBCC = bcc
-                               , envInReplyTo = inReplyTo
-                               , envMessageID = messageID}
+             return $ Envelope { envDate = date,
+                                 envSubject = subject,
+                                 envFrom = from,
+                                 envSender = sender,
+                                 envReplyTo = replyTo,
+                                 envTo = to,
+                                 envCC = cc,
+                                 envBCC = bcc,
+                                 envInReplyTo = inReplyTo,
+                                 envMessageID = messageID }
 
 bodyExtension = choice [extStr, extNum, extList]
     where extList = do C8.char '('
@@ -430,9 +426,9 @@ bodyExtension = choice [extStr, extNum, extList]
 
 responseData = do C8.char '*'
                   sp
-                  resp <- choice [ respCondState
-                                , respCondBye
-                                , mboxData]
+                  resp <- choice [respCondState,
+                                 respCondBye,
+                                 mboxData]
                   crlf
                   return $ Untagged resp
     where mboxData = do mdata <- mailboxData
@@ -454,7 +450,7 @@ continueRequest = do C8.char '+'
     where rtext = do (code, text) <- respText
                      return $ ResponseText code text
 
-serverResponse = do cmd <- choice [ responseTagged
-                                 , responseDone
-                                 , continueRequest]
+serverResponse = do cmd <- choice [responseTagged,
+                                  responseDone,
+                                  continueRequest]
                     return cmd

@@ -64,16 +64,16 @@ type AddrMailbox = NString
 data Address = Address AddrName AddrAdl AddrMailbox AddrHost
                deriving (Eq, Ord, Show)
 
-data Envelope = Envelope { envDate :: NString
-                         , envSubject :: NString
-                         , envFrom :: NList Address
-                         , envSender :: NList Address
-                         , envReplyTo :: NList Address
-                         , envTo :: NList Address
-                         , envCC :: NList Address
-                         , envBCC :: NList Address
-                         , envInReplyTo :: NList Address
-                         , envMessageID :: NString}
+data Envelope = Envelope { envDate      :: NString,
+                           envSubject   :: NString,
+                           envFrom      :: NList Address,
+                           envSender    :: NList Address,
+                           envReplyTo   :: NList Address,
+                           envTo        :: NList Address,
+                           envCC        :: NList Address,
+                           envBCC       :: NList Address,
+                           envInReplyTo :: NList Address,
+                           envMessageID :: NString }
                 deriving (Eq, Ord, Show)
 
 data Month = Jan | Feb | Mar | Apr | May | Jun | Jul | Aug
@@ -118,11 +118,11 @@ data BodyFieldEncoding = SevenBitEnc
                        | BodyFieldEnc String
                          deriving (Eq, Ord, Show)
 
-data BodyFields = BodyFields { bodyFieldParam :: NList String
-                             , bodyFieldID :: NString
-                             , bodyFieldDesc :: NString
-                             , bodyFieldEnc :: BodyFieldEncoding
-                             , bodyFieldOctets :: Int}
+data BodyFields = BodyFields { bodyFieldParam  :: NList String,
+                               bodyFieldID     :: NString,
+                               bodyFieldDesc   :: NString,
+                               bodyFieldEnc    :: BodyFieldEncoding,
+                               bodyFieldOctets :: Int }
                   deriving (Eq, Ord, Show)
 
 type BodyFieldLines = Int
