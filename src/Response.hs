@@ -118,7 +118,7 @@ data BodyFieldEncoding = SevenBitEnc
                        | BodyFieldEnc String
                          deriving (Eq, Ord, Show)
 
-data BodyFields = BodyFields { bodyFieldParam  :: NList String,
+data BodyFields = BodyFields { bodyFieldParam  :: BodyFieldParams,
                                bodyFieldID     :: NString,
                                bodyFieldDesc   :: NString,
                                bodyFieldEnc    :: BodyFieldEncoding,
@@ -132,7 +132,7 @@ data BodyType = BodyTypeBasic MediaBasic BodyFields
               | BodyTypeText MediaSubtype BodyFields BodyFieldLines
                 deriving (Eq, Ord, Show)
 
-type BodyFieldParams = NList [(String,String)]
+type BodyFieldParams = NList (String, String)
 
 data BodyFieldDsp = Maybe (String, BodyFieldParams)
                     deriving (Eq, Ord, Show)

@@ -30,6 +30,9 @@ import Data.Attoparsec.Combinator
 str s = do text <- C8.stringCI s
            return $ BS.unpack s
 
+strVal s t = do C8.stringCI s
+                return t
+
 isSP c = c == ' '
 sp = C8.satisfy isSP
 
@@ -414,7 +417,92 @@ bodyExtension = choice [extStr, extNum, extList]
           extNum = do num <- number
                       return $ BodyExtNum num
 
---mediaBasic = 
+mediaBasic = do mediaType <- choice [known, custom]
+                sp
+                subType <- string
+                return $ MediaBasic mediaType subType
+  where known = do C8.char '"'
+                   val <- choice [strVal "APPLICATION" Application,
+                                 strVal "AUDIO" Audio,
+                                 strVal "IMAGE" Image,
+                                 strVal "MESSAGE" Message,
+                                 strVal "VIDEO" Video]
+                   C8.char '"'
+                   return val
+        custom = do text <- string
+                    return $ MediaType text
+
+bodyFieldPrm = choice [mult, nil]
+    where param = do left <- string
+                     sp
+                     right <- string
+                     return $ (left, right)
+          mult = do C8.char '('
+                    items <- sepBy1 param sp
+                    C8.char ')'
+                    return $ Just items
+
+bodyFldEnc = choice [known, custom]
+    where val = choice [strVal "7BIT" SevenBitEnc,
+                        strVal "8BIT" EightBitEnc,
+                        strVal "BINARY" BinaryEnc,
+                        strVal "BASE64" Base64Enc,
+                        strVal "QUOTED-PRINTABLE" QuotedPrintableEnc]
+          known = do C8.char '"'
+                     v <- val
+                     C8.char '"'
+                     return v
+          custom = do text <- string
+                      return $ BodyFieldEnc text
+
+bodyFields = do param <- bodyFieldPrm
+                sp
+                id <- nstring
+                sp
+                desc <- nstring
+                sp
+                enc <- bodyFldEnc
+                sp
+                oct <- number
+                return $ BodyFields { bodyFieldParam = param,
+                                      bodyFieldID = id,
+                                      bodyFieldDesc = desc,
+                                      bodyFieldEnc = enc,
+                                      bodyFieldOctets = oct }
+
+bodyTypeBasic = do media <- mediaBasic
+                   sp
+                   flds <- bodyFields
+                   return $ BodyTypeBasic media flds
+
+bodyTypeMsg = do str "\"MESSAGE\""
+                 sp
+                 str "\"RFC822\""
+                 sp
+                 flds <- bodyFields
+                 sp
+                 env <- envelope
+                 sp
+                 bdy <- body
+                 sp
+                 lines <- number
+                 return $ BodyTypeMsg flds env bdy lines
+
+bodyTypeText = do str "\"TEXT\""
+                  sp
+                  sub <- string
+                  sp
+                  flds <- bodyFields
+                  sp
+                  lines <- number
+                  return $ BodyTypeText sub flds lines
+
+
+
+body = do C8.char '('
+          bdy <- choice [bodyType1Part, bodyTypeMPart]
+          C8.char ')'
+          return bdy
 
 -- msgAttStatic = 
 --     where env = do str "ENVELOPE"
