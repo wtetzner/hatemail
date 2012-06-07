@@ -375,37 +375,37 @@ addrs = do C8.char '('
            return $ Just ads
 naddrs = choice [addrs, nil]
 
-envelop = do C8.char '('
-             date <- nstring
-             sp
-             subject <- nstring
-             sp
-             from <- naddrs
-             sp
-             sender <- naddrs
-             sp
-             replyTo <- naddrs
-             sp
-             to <- naddrs
-             sp
-             cc <- naddrs
-             sp
-             bcc <- naddrs
-             sp
-             inReplyTo <- naddrs
-             sp
-             messageID <- nstring
-             C8.char ')'
-             return $ Envelope { envDate = date,
-                                 envSubject = subject,
-                                 envFrom = from,
-                                 envSender = sender,
-                                 envReplyTo = replyTo,
-                                 envTo = to,
-                                 envCC = cc,
-                                 envBCC = bcc,
-                                 envInReplyTo = inReplyTo,
-                                 envMessageID = messageID }
+envelope = do C8.char '('
+              date <- nstring
+              sp
+              subject <- nstring
+              sp
+              from <- naddrs
+              sp
+              sender <- naddrs
+              sp
+              replyTo <- naddrs
+              sp
+              to <- naddrs
+              sp
+              cc <- naddrs
+              sp
+              bcc <- naddrs
+              sp
+              inReplyTo <- naddrs
+              sp
+              messageID <- nstring
+              C8.char ')'
+              return $ Envelope { envDate = date,
+                                  envSubject = subject,
+                                  envFrom = from,
+                                  envSender = sender,
+                                  envReplyTo = replyTo,
+                                  envTo = to,
+                                  envCC = cc,
+                                  envBCC = bcc,
+                                  envInReplyTo = inReplyTo,
+                                  envMessageID = messageID }
 
 bodyExtension = choice [extStr, extNum, extList]
     where extList = do C8.char '('
@@ -497,7 +497,70 @@ bodyTypeText = do str "\"TEXT\""
                   lines <- number
                   return $ BodyTypeText sub flds lines
 
+bodyExtMD5 = do text <- nstring
+                return $ BodyExt text
 
+bodyExtDsp a = do x <- a
+                  sp
+                  extDsp <- choice [dsp, nil]
+                  return $ BodyExtDsp x extDsp
+    where dsp = do C8.char '('
+                   text <- string
+                   sp
+                   params <- bodyFieldPrm
+                   C8.char ')'
+                   return $ Just (text, params)
+
+bodyExtLang a = do (BodyExtDsp x params) <- bodyExtDsp a
+                   sp
+                   lang <- bodyFldLang
+                   return $ BodyExtLang x params lang
+    where bodyFldLang = choice [text, lst]
+          text = do txt <- nstring
+                    return $ BodyFieldLang txt
+          lst = do C8.char '('
+                   strs <- sepBy1 string sp
+                   C8.char ')'
+                   return $ BodyFieldLangs strs
+
+bodyExtLoc a = do (BodyExtLang x params lang) <- bodyExtLang a
+                  sp
+                  loc <- nstring
+                  bdy <- option [] exts
+                  return $ BodyExtLoc x params lang bdy
+    where exts = do sp
+                    lst <- sepBy1 bodyExtension sp
+                    return lst
+
+bodyExt1Part = choice [bodyExtLoc nstring,
+                       bodyExtLang nstring,
+                       bodyExtDsp nstring,
+                       bodyExtMD5]
+
+bodyExtMPart = choice [bodyExtLoc bodyFieldPrm,
+                       bodyExtLang bodyFieldPrm,
+                       bodyExtDsp bodyFieldPrm,
+                       prm]
+    where prm = do params <- bodyFieldPrm
+                   return $ BodyExt params
+
+bodyType1Part = do btype <- choice [bodyTypeBasic,
+                                   bodyTypeMsg,
+                                   bodyTypeText]
+                   ex <- option Nothing ext
+                   return $ BodyType1Part btype ex
+    where ext = do sp
+                   ex <- bodyExt1Part
+                   return $ Just ex
+
+bodyTypeMPart = do bdy <- many1 body
+                   sp
+                   msub <- string
+                   ex <- option Nothing ext
+                   return $ BodyTypeMPart bdy msub ex
+    where ext = do sp
+                   ex <- bodyExtMPart
+                   return $ Just ex
 
 body = do C8.char '('
           bdy <- choice [bodyType1Part, bodyTypeMPart]

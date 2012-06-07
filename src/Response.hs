@@ -134,11 +134,10 @@ data BodyType = BodyTypeBasic MediaBasic BodyFields
 
 type BodyFieldParams = NList (String, String)
 
-data BodyFieldDsp = Maybe (String, BodyFieldParams)
-                    deriving (Eq, Ord, Show)
+type BodyFieldDsp = Maybe (String, BodyFieldParams)
 
 data BodyFieldLang = BodyFieldLang NString
-                   | BodyFieldLangs (NList String)
+                   | BodyFieldLangs [String]
                      deriving (Eq, Ord, Show)
 
 type BodyFieldLoc = NString
@@ -155,12 +154,9 @@ type BodyFieldMD5 = NString
 type BodyExt1Part = BodyExt BodyFieldMD5
 type BodyExtMPart = BodyExt BodyFieldParams
 
-data Body = BodyExt1Part BodyExt1Part
-          | BodyExtMPart BodyExtMPart
+data Body = BodyType1Part BodyType (Maybe BodyExt1Part)
+          | BodyTypeMPart [Body] MediaSubtype (Maybe BodyExtMPart)
             deriving (Eq, Ord, Show)
-
-data BodyTypePart = BodyType1Part BodyType
-                    deriving (Eq, Ord, Show)
 
 type HeaderFieldName = String
 type HeaderList = [HeaderFieldName]
