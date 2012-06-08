@@ -698,19 +698,37 @@ msgAttStatic = choice [env, date, head, text, size, bstruct,
                     C8.char '>'
                     return $ Just num
                     
+msgAtt = do C8.char '('
+            atts <- sepBy1 (choice [msgAttDynamic, msgAttStatic]) sp
+            C8.char ')'
+            return atts
 
-
--- messageData = do 
+messageData = do num <- nzNumber
+                 sp
+                 mdata <- choice [exp num, fetch num]
+                 return mdata
+    where exp num = do str "EXPUNGE"
+                       return $ Expunge num
+          fetch num = do str "FETCH"
+                         sp
+                         msg <- msgAtt
+                         return $ Fetch num msg
 
 responseData = do C8.char '*'
                   sp
                   resp <- choice [respCondState,
                                  respCondBye,
-                                 mboxData]
+                                 mboxData,
+                                 msgData,
+                                 capData]
                   crlf
                   return $ Untagged resp
     where mboxData = do mdata <- mailboxData
                         return $ MailboxData mdata
+          msgData = do msg <- messageData
+                       return $ MessageData msg
+          capData = do (Capability strs) <- capabilityData
+                       return $ CapabilityData strs
 
 responseTagged = do t <- tag
                     sp
@@ -729,6 +747,7 @@ continueRequest = do C8.char '+'
                      return $ ResponseText code text
 
 serverResponse = do cmd <- choice [responseTagged,
+                                  responseData,
                                   responseDone,
                                   continueRequest]
                     return cmd

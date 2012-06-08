@@ -194,7 +194,7 @@ data MsgAtt = AttFlags [Flag]
               deriving (Eq, Ord, Show)
 
 data MessageData = Expunge Int
-                 | Fetch Int MsgAtt
+                 | Fetch Int [MsgAtt]
                    deriving (Eq, Ord, Show)
 
 type Tag = String
