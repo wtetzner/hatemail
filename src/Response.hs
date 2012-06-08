@@ -174,7 +174,7 @@ data SectionText = SectionText SectionMsgText
 type SectionPart = [Int]
 
 data SectionSpec = SectionMsgText SectionMsgText
-                 | SectionPartText SectionPart SectionText
+                 | SectionPartText SectionPart (Maybe SectionText)
                    deriving (Eq, Ord, Show)
 
 type Section = Maybe SectionSpec

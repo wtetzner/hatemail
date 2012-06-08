@@ -347,13 +347,6 @@ mailboxData = choice [flags, list, lsub, search, status,
                     str "RECENT"
                     return $ Recent num
 
-msgAttDynamic = do str "FLAGS"
-                   sp
-                   C8.char '('
-                   flgs <- sepBy flagFetch sp
-                   C8.char ')'
-                   return $ AttFlags flgs
-
 addrName = nstring
 addrAdl = nstring
 addrHost = nstring
@@ -567,11 +560,145 @@ body = do C8.char '('
           C8.char ')'
           return bdy
 
--- msgAttStatic = 
---     where env = do str "ENVELOPE"
---                    sp
---                    envl <- envelope
---                    return $ AttEnvelope envl
+headerList = do C8.char '('
+                names <- sepBy1 astring sp
+                C8.char ')'
+                return names
+
+sectionMsgText = choice [strVal "HEADER" Header,
+                         fields,
+                         fieldsNot,
+                         strVal "TEXT" Text]
+  where fields = do str "HEADER.FIELDS"
+                    lst <- headerList
+                    return $ HeaderFields lst
+        fieldsNot = do str "HEADER.FIELDS.NOT"
+                       lst <- headerList
+                       return $ HeaderFieldsNot lst
+
+sectionPart = do nums <- sepBy1 nzNumber (C8.char '.')
+                 return nums
+
+sectionText = choice [msgText, strVal "MIME" MIME]
+  where msgText = do txt <- sectionMsgText
+                     return $ SectionText txt
+
+sectionSpec = do choice [msgText, part]
+  where msgText = do txt <- sectionMsgText
+                     return $ SectionMsgText txt
+        part = do spart <- sectionPart
+                  text <- option Nothing txt
+                  return $ SectionPartText spart text
+        txt = do C8.char '.'
+                 stext <- sectionText
+                 return $ Just stext
+
+section = do C8.char '['
+             spec <- option Nothing secSpec
+             C8.char ']'
+             return spec
+    where secSpec = do spec <- sectionSpec
+                       return $ Just spec
+
+msgAttDynamic = do str "FLAGS"
+                   sp
+                   C8.char '('
+                   flgs <- sepBy flagFetch sp
+                   C8.char ')'
+                   return $ AttFlags flgs
+
+twoDig = do dig1 <- C8.digit
+            dig2 <- C8.digit
+            return (read [dig1, dig2] :: Int)
+
+fourDig = do dig1 <- C8.digit
+             dig2 <- C8.digit
+             dig3 <- C8.digit
+             dig4 <- C8.digit
+             return (read [dig1, dig2, dig3, dig4] :: Int)
+
+time = do hour <- twoDig
+          C8.char ':'
+          min <- twoDig
+          C8.char ':'
+          sec <- twoDig
+          return $ Time hour min sec
+
+timeZone = do sign <- choice [C8.char '+', C8.char '-']
+              num <- fourDig
+              return $ if sign == '-' then num * (-1) else num
+
+dateTime = do C8.char '"'
+              day <- dateDay
+              C8.char '-'
+              month <- choice [strVal "Jan" Jan,
+                              strVal "Feb" Feb,
+                              strVal "Mar" Mar,
+                              strVal "Apr" Apr,
+                              strVal "May" May,
+                              strVal "Jun" Jun,
+                              strVal "Jul" Jul,
+                              strVal "Aug" Aug,
+                              strVal "Sep" Sep,
+                              strVal "Oct" Oct,
+                              strVal "Nov" Nov,
+                              strVal "Dec" Dec]
+              C8.char '-'
+              year <- fourDig
+              sp
+              tm <- time
+              sp
+              zn <- timeZone
+              C8.char '"'
+              return $ DateTime day month year tm zn
+    where dateDay1 = do sp
+                        dig <- C8.digit
+                        return (read [dig] :: Int)
+          dateDay = choice [dateDay1, twoDig]
+
+msgAttStatic = choice [env, date, head, text, size, bstruct,
+                       sect, id]
+    where env = do str "ENVELOPE"
+                   sp
+                   envl <- envelope
+                   return $ AttEnvelope envl
+          date = do str "INTERNALDATE"
+                    sp
+                    dt <- dateTime
+                    return $ AttInternalDate dt
+          head = do str "RFC822.HEADER"
+                    sp
+                    txt <- nstring
+                    return $ RFC822Header txt
+          text = do str "RFC822.TEXT"
+                    sp
+                    txt <- nstring
+                    return $ RFC822Text txt
+          size = do str "RFC822.SIZE"
+                    sp
+                    num <- number
+                    return $ RFC822Size num
+          bstruct = do choice [str "BODYSTRUCTURE", str "BODY"]
+                       sp
+                       bdy <- body
+                       return $ BodyStructure bdy
+          sect = do str "BODY"
+                    sp
+                    sec <- section
+                    num <- option Nothing numb
+                    sp
+                    text <- nstring
+                    return $ Body sec num text
+          id = do str "UID"
+                  sp
+                  uid <- nzNumber
+                  return $ UID uid
+          numb = do C8.char '<'
+                    num <- number
+                    C8.char '>'
+                    return $ Just num
+                    
+
 
 -- messageData = do 
 
