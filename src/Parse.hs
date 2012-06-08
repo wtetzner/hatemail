@@ -142,9 +142,9 @@ respTextCode = do choice [alert, badcharset, capabilityData,
                      return Alert
           parse = do str "PARSE"
                      return Parse
-          readOnly = do str "READONLY"
+          readOnly = do str "READ-ONLY"
                         return ReadOnly
-          readWrite = do str "READWRITE"
+          readWrite = do str "READ-WRITE"
                          return ReadWrite
           tryCreate = do str "TRYCREATE"
                          return TryCreate
