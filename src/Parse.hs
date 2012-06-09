@@ -26,6 +26,7 @@ import qualified Data.ByteString.Lazy.Char8 as BZ
 import qualified Data.ByteString.Char8 as BS
 import Data.Char (ord, chr)
 import Data.Attoparsec.Combinator
+import Data.String.Utils
 
 str s = do text <- C8.stringCI s
            return $ BS.unpack s
@@ -98,7 +99,7 @@ digitNZ = C8.satisfy isDigitNZ
 number = do num <- many1 C8.digit
             return (read num :: Int)
 nzNumber = do first <- digitNZ
-              rest <- many1 C8.digit
+              rest <- many C8.digit
               return (read (first : rest) :: Int)
 
 flagExtension = do bslash <- C8.char '\\'
@@ -114,7 +115,7 @@ flag = do text <- choice [str "\\Answered",
                          flagKeyword,
                          flagExtension]
           return text
-flagFetch = choice [flag, recent]
+flagFetch = choice [flag, recent] AZ.<?> "flag-fetch"
   where recent = do text <- C8.string "\\Recent"
                     return "\\Recent"
 
@@ -125,6 +126,7 @@ flagPerm = choice [flag, ast]
 authType = do text <- atom
               return text
 
+-- TODO: Figure out what to do with AUTH=
 capability = choice [auth, at]
     where auth = do C8.stringCI "AUTH="
                     atype <- authType
@@ -132,7 +134,8 @@ capability = choice [auth, at]
           at = do text <- atom
                   return text
 capabilityData = do C8.stringCI "CAPABILITY"
-                    caps <- sepBy1 capability sp
+                    sp
+                    caps <- sepBy1 atom sp
                     return $ Capability caps
 respTextCode = do choice [alert, badcharset, capabilityData,
                           parse, permFlags, readOnly, readWrite,
@@ -356,9 +359,9 @@ address = do C8.char '('
              sp
              adl <- addrAdl
              sp
-             host <- addrHost
-             sp
              mailbox <- addrMailbox
+             sp
+             host <- addrHost
              C8.char ')'
              return $ Address name adl mailbox host
 
@@ -537,9 +540,9 @@ bodyExtMPart = choice [bodyExtLoc bodyFieldPrm,
     where prm = do params <- bodyFieldPrm
                    return $ BodyExt params
 
-bodyType1Part = do btype <- choice [bodyTypeBasic,
+bodyType1Part = do btype <- choice [bodyTypeText,
                                    bodyTypeMsg,
-                                   bodyTypeText]
+                                   bodyTypeBasic]
                    ex <- option Nothing ext
                    return $ BodyType1Part btype ex
     where ext = do sp
@@ -625,8 +628,11 @@ time = do hour <- twoDig
           return $ Time hour min sec
 
 timeZone = do sign <- choice [C8.char '+', C8.char '-']
-              num <- fourDig
-              return $ if sign == '-' then num * (-1) else num
+              hours <- twoDig
+              mins <- twoDig
+              let hourMins = hours * 60
+              let time = hourMins + mins
+              return $ if sign == '-' then time * (-1) else time
 
 dateTime = do C8.char '"'
               day <- dateDay
@@ -683,7 +689,6 @@ msgAttStatic = choice [env, date, head, text, size, bstruct,
                        bdy <- body
                        return $ BodyStructure bdy
           sect = do str "BODY"
-                    sp
                     sec <- section
                     num <- option Nothing numb
                     sp
@@ -697,7 +702,7 @@ msgAttStatic = choice [env, date, head, text, size, bstruct,
                     num <- number
                     C8.char '>'
                     return $ Just num
-                    
+
 msgAtt = do C8.char '('
             atts <- sepBy1 (choice [msgAttDynamic, msgAttStatic]) sp
             C8.char ')'
@@ -746,8 +751,10 @@ continueRequest = do C8.char '+'
     where rtext = do (code, text) <- respText
                      return $ ResponseText code text
 
-serverResponse = do cmd <- choice [responseTagged,
-                                  responseData,
-                                  responseDone,
-                                  continueRequest]
-                    return cmd
+serverResponse = choice [responseTagged C8.<?> "Response Tagged",
+                         responseData C8.<?> "Response Data",
+                         responseDone C8.<?> "Response Done",
+                         continueRequest C8.<?> "Continue Request"]
+
+parseFile filename = do text <- readFile filename
+                        return $ AZ.parse serverResponse $ BZ.pack $  (replace "\n" "\r\n" text) -- ++ "\r\n"

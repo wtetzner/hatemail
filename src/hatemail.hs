@@ -68,5 +68,5 @@ doimap imapconn = do
   -- runCommand imapclient "a005 STORE 1:1 +FLAGS (\\Deleted)"
   -- runCommand imapclient "a006 EXPUNGE"
   runCommand imapclient "a007 SEARCH TEXT \"Privacy\""
-  runCommand imapclient "a008 FETCH 5 (BODY[HEADER] BODY[TEXT])"
+  runCommand imapclient "a008 FETCH 5 full"
   disconnectClient imapclient
