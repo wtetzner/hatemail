@@ -36,7 +36,7 @@ strVal s t = do C8.stringCI s
                 return t
 
 isSP c = c == ' '
-sp = C8.satisfy isSP
+sp = C8.char ' '
 
 isCTL c = ((ord c) >= 0x00 && (ord c) <= 0x1F) || c == (chr 0x7F)
 
@@ -44,7 +44,7 @@ isListWildcard c = c == '%' || c == '*'
 listWildcard = C8.satisfy isListWildcard
 
 isDQUOTE c = c == '"'
-dquote = C8.satisfy isDQUOTE
+dquote = C8.char '"'
 
 isQuotedSpecial c = c == '\\' || (isDQUOTE c)
 quotedSpecial = C8.satisfy isQuotedSpecial
@@ -79,7 +79,7 @@ text = many1 textChar
 isQChar c = (isTextChar c) && (not $ isQuotedSpecial c)
 qchar = C8.satisfy isQChar
 
-quotedEscaped = do C8.string "\\"
+quotedEscaped = do C8.char '\\'
                    chr <- quotedSpecial
                    return chr
 quotedChar = choice [qchar, quotedEscaped]
