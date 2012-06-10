@@ -24,8 +24,8 @@ import Network.TLS
 import Network.TLS.Extra
 import Crypto.Random
 import System.IO
-import qualified Data.ByteString.Lazy as BZ
-import qualified Data.ByteString.Internal as BS
+import qualified Data.ByteString.Lazy.Char8 as BZ
+import qualified Data.ByteString.Char8 as BS
 import System.Environment(getArgs)
 import Control.Concurrent
 
@@ -39,7 +39,7 @@ parseArgs (hostname:port:username:password:args) =
 
 runCommand conn command = do
   putStrLn command
-  writeText conn $ BZ.pack $ map BS.c2w $ command ++ "\r\n"
+  writeText conn $ BZ.pack $ command ++ "\r\n"
   line <- keepReadingText conn
   -- line <- readText conn
   -- line2 <- readTextNoBlock conn
@@ -68,5 +68,5 @@ doimap imapconn = do
   -- runCommand imapclient "a005 STORE 1:1 +FLAGS (\\Deleted)"
   -- runCommand imapclient "a006 EXPUNGE"
   runCommand imapclient "a007 SEARCH TEXT \"Privacy\""
-  runCommand imapclient "a008 FETCH 5 full"
+  runCommand imapclient "a008 FETCH 1 full"
   disconnectClient imapclient

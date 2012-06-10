@@ -22,7 +22,7 @@ import Network.TLS.Extra
 import Crypto.Random
 import System.IO
 import qualified Data.ByteString.Lazy.Char8 as BZ
-import qualified Data.ByteString.Internal as BS
+import qualified Data.ByteString.Char8 as BS
 import Control.Monad.State
 import Text.Printf
 
@@ -49,7 +49,8 @@ connectClient False hostname port = do
 
 readText :: IMAPConnection -> IO BZ.ByteString
 readText (SSLConn ctx) = do
-  recvData ctx
+  str <- recvData ctx
+  return $ BZ.fromChunks [str]
 readText (Conn h) = do
   BZ.hGet h 4096
 
@@ -57,7 +58,10 @@ readTextNoBlock :: IMAPConnection -> IO BZ.ByteString
 readTextNoBlock (SSLConn ctx) = do
   let conn = ctxConnection ctx
   ready <- hReady conn
-  if ready then recvData ctx else return BZ.empty
+  if ready
+    then do str <- recvData ctx
+            return $ BZ.fromChunks [str]
+    else return BZ.empty
 readTextNoBlock (Conn h) = do
   BZ.hGetNonBlocking h 4096
 
