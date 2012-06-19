@@ -32,9 +32,9 @@ data RespTextCode = Alert
                   | ReadOnly
                   | ReadWrite
                   | TryCreate
-                  | UIDNext Int
-                  | UIDValidity Int
-                  | Unseen Int
+                  | UIDNext Integer
+                  | UIDValidity Integer
+                  | Unseen Integer
                   | GenRespCode String NString
                     deriving (Eq, Ord, Show)
 
@@ -50,10 +50,10 @@ data MailboxList = MailboxList [Flag] NString Mailbox
 data MBoxData = Flags [Flag]
               | List MailboxList
               | LSub MailboxList
-              | Search [Int]
-              | Status Mailbox [(StatusAtt, Int)]
-              | Exists Int
-              | Recent Int
+              | Search [Integer]
+              | Status Mailbox [(StatusAtt, Integer)]
+              | Exists Integer
+              | Recent Integer
                 deriving (Eq, Ord, Show)
 
 type AddrName = NString
@@ -80,21 +80,21 @@ data Month = Jan | Feb | Mar | Apr | May | Jun | Jul | Aug
            | Sep | Oct | Nov | Dec
              deriving (Eq, Ord, Show)
 
-type Hours = Int
-type Minutes = Int
-type Seconds = Int
+type Hours = Integer
+type Minutes = Integer
+type Seconds = Integer
 data Time = Time Hours Minutes Seconds
             deriving (Eq, Ord, Show)
 
-type TimeZone = Int
+type TimeZone = Integer
 
-type Day = Int
-type Year = Int
+type Day = Integer
+type Year = Integer
 data DateTime = DateTime Day Month Year Time TimeZone
                 deriving (Eq, Ord, Show)
 
 data BodyExtension = BodyExtStr NString
-                   | BodyExtNum Int
+                   | BodyExtNum Integer
                    | BodyExtension [BodyExtension]
                      deriving (Eq, Ord, Show)
 
@@ -122,10 +122,10 @@ data BodyFields = BodyFields { bodyFieldParam  :: BodyFieldParams,
                                bodyFieldID     :: NString,
                                bodyFieldDesc   :: NString,
                                bodyFieldEnc    :: BodyFieldEncoding,
-                               bodyFieldOctets :: Int }
+                               bodyFieldOctets :: Integer }
                   deriving (Eq, Ord, Show)
 
-type BodyFieldLines = Int
+type BodyFieldLines = Integer
 
 data BodyType = BodyTypeBasic MediaBasic BodyFields
               | BodyTypeMsg BodyFields Envelope Body BodyFieldLines
@@ -171,7 +171,7 @@ data SectionText = SectionText SectionMsgText
                  | MIME
                    deriving (Eq, Ord, Show)
 
-type SectionPart = [Int]
+type SectionPart = [Integer]
 
 data SectionSpec = SectionMsgText SectionMsgText
                  | SectionPartText SectionPart (Maybe SectionText)
@@ -179,7 +179,7 @@ data SectionSpec = SectionMsgText SectionMsgText
 
 type Section = Maybe SectionSpec
 
-type UniqueID = Int
+type UniqueID = Integer
 
 data MsgAtt = AttFlags [Flag]
             | AttEnvelope Envelope
@@ -187,14 +187,14 @@ data MsgAtt = AttFlags [Flag]
             | RFC822Text NString
             | RFC822Header NString
             | RFC822 NString
-            | RFC822Size Int
+            | RFC822Size Integer
             | BodyStructure Body
-            | Body Section (Maybe Int) NString
+            | Body Section (Maybe Integer) NString
             | UID UniqueID
               deriving (Eq, Ord, Show)
 
-data MessageData = Expunge Int
-                 | Fetch Int [MsgAtt]
+data MessageData = Expunge Integer
+                 | Fetch Integer [MsgAtt]
                    deriving (Eq, Ord, Show)
 
 type Tag = String

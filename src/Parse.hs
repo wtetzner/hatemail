@@ -16,7 +16,6 @@ You should have received a copy of the GNU General Public License
 along with hatemail.  If not, see <http://www.gnu.org/licenses/>.  --}
 
 {-# LANGUAGE OverloadedStrings #-}
-{-# LANGUAGE MonadComprehensions #-}
 
 module Parse where
 import Response
@@ -98,10 +97,10 @@ isDigitNZ c = (C8.isDigit c) && (c /= '0')
 digitNZ = C8.satisfy isDigitNZ
 
 number = do num <- many1 C8.digit
-            return (read num :: Int)
+            return (read num :: Integer)
 nzNumber = do first <- digitNZ
               rest <- many C8.digit
-              return (read (first : rest) :: Int)
+              return (read (first : rest) :: Integer)
 
 flagExtension = do bslash <- C8.char '\\'
                    a <- atom
@@ -228,7 +227,7 @@ literal = do C8.string "{"
              num <- number
              C8.string "}"
              crlf
-             text <- C8.take num
+             text <- C8.take $ fromIntegral num
              return $ BS.unpack text
 
 string = do text <- choice [literal, quoted]
@@ -613,13 +612,13 @@ msgAttDynamic = do str "FLAGS"
 
 twoDig = do dig1 <- C8.digit
             dig2 <- C8.digit
-            return (read [dig1, dig2] :: Int)
+            return (read [dig1, dig2] :: Integer)
 
 fourDig = do dig1 <- C8.digit
              dig2 <- C8.digit
              dig3 <- C8.digit
              dig4 <- C8.digit
-             return (read [dig1, dig2, dig3, dig4] :: Int)
+             return (read [dig1, dig2, dig3, dig4] :: Integer)
 
 time = do hour <- twoDig
           C8.char ':'
@@ -660,7 +659,7 @@ dateTime = do C8.char '"'
               return $ DateTime day month year tm zn
     where dateDay1 = do sp
                         dig <- C8.digit
-                        return (read [dig] :: Int)
+                        return (read [dig] :: Integer)
           dateDay = choice [dateDay1, twoDig]
 
 msgAttStatic = choice [env, date, head, text, size, bstruct,
