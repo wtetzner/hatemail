@@ -40,7 +40,8 @@ data IMAPConnection = SSLConn (TLSCtx Handle)
 connectClient :: Bool -> String -> String -> IO IMAPConnection
 connectClient True hostname port = do
   g <- newGenIO :: IO SystemRandom
-  client <- connectionClient hostname port defaultParams { pCiphers = ciphersuite_all } g
+  client <- connectionClient hostname port defaultParams
+           { pCiphers = ciphersuite_all } g
   success <- handshake client
   return $ SSLConn client
 connectClient False hostname port = do

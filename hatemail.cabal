@@ -2,11 +2,11 @@ name: hatemail
 version: 0.1.0
 license: GPL-3
 license-file: COPYING
-build-depends: base -any, tls, bytestring, crypto-api, tls-extra, mtl, network, attoparsec, MissingH
+build-depends: base -any, tls == 0.9.11, tls-extra == 0.4.7.1, bytestring, crypto-api, mtl, network, attoparsec, MissingH
 build-type: Simple
 executable: hatemail
 extensions: OverloadedStrings
 main-is: hatemail.hs
 buildable: True
 hs-source-dirs: src
-other-modules: Parse Connection Response
+-- other-modules: Parse Connection Response
