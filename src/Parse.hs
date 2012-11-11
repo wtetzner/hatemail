@@ -28,15 +28,18 @@ import Data.Char (ord, chr)
 import Data.Attoparsec.Combinator
 import Data.String.Utils
 
+-- Case-insensitive string match, returning s
 str s = do text <- C8.stringCI s
            return $ BS.unpack s
 
+-- Case-insensitive string match, return t
 strVal s t = do C8.stringCI s
                 return t
 
 isSP c = c == ' '
 sp = C8.char ' '
 
+-- Test for control characters
 isCTL c = ((ord c) >= 0x00 && (ord c) <= 0x1F) || c == (chr 0x7F)
 
 isListWildcard c = c == '%' || c == '*'
@@ -757,4 +760,5 @@ serverResponse = choice [responseTagged C8.<?> "Response Tagged",
                          continueRequest C8.<?> "Continue Request"]
 
 parseFile filename = do text <- readFile filename
-                        return $ AZ.parse serverResponse $ BZ.pack $  (replace "\n" "\r\n" text) -- ++ "\r\n"
+                        return $ AZ.parse serverResponse $ BZ.pack $
+                                   (replace "\n" "\r\n" text) -- ++ "\r\n"
