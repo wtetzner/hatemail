@@ -1,0 +1,2 @@
+defmodule Hatemail do
+end
